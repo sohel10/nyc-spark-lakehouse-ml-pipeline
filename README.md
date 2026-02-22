@@ -40,7 +40,9 @@ This project implements a production-style lakehouse architecture for scalable m
 
 Below shows a diagran ingestion and merge process executed with PySpark:
 
-![Spark Pipeline](docs/figures/pipeline.png)
+<p align="center">
+  <img src="docs/figures/pipeline.png" width="600"/>
+</p>
 
 
 Each layer isolates responsibilities:
