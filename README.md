@@ -32,7 +32,6 @@ This project implements a **production-style lakehouse architecture**:
 
 ---
 
-## 🏗️ Architecture
 ## 🏗 Architecture Overview
 
 This project implements a production-style lakehouse architecture for scalable multi-year data ingestion and analytical dataset preparation.
@@ -41,7 +40,7 @@ This project implements a production-style lakehouse architecture for scalable m
 
 Below shows a diagran ingestion and merge process executed with PySpark:
 
-![Spark Pipeline](docs/pipeline.png)
+![Spark Pipeline](docs/figures/pipeline.png)
 
 
 Each layer isolates responsibilities:
@@ -64,7 +63,7 @@ The pipeline processes large-scale NYC Yellow Taxi trip data:
 
 Below shows a successful yearly ingestion and merge process executed with PySpark:
 
-![Spark Execution](docs/spark.png)
+![Spark Execution](docs/figures/spark.png)
 
 ## ⚡ Performance Considerations
 
@@ -117,40 +116,6 @@ nyc-spark-lakehouse-ml-pipeline/
 - Production-style pipeline structuring
 
 
-## 🔧 Engineering Highlights
-
-### ✅ Schema Harmonization
-- Used `unionByName(allowMissingColumns=True)` to handle evolving schemas
-- Resolved parquet physical/logical type mismatches
-- Standardized numeric casting across years
-
-### ✅ Memory-Safe Processing
-- Streamed ingestion at month-level to prevent `Java heap space` crashes
-- Avoided full-year in-memory unions
-- Used controlled `repartition` strategy for scalable writes
-
-### ✅ Partition Optimization
-- Balanced file size and distributed performance
-- Prevented small-file problem
-- Designed partitioned analytical layer for partition pruning
-
-### ✅ Lakehouse Design
-- Raw → Clean → Processed layering
-- ML-ready dataset construction
-- Separation of ingestion and modeling concerns
-
----
-
-## ⚡ Technology Stack
-
-- **PySpark**
-- **Parquet**
-- **Distributed Data Processing**
-- **Lakehouse Architecture**
-- **Partition Optimization**
-- **Feature Engineering**
-
----
 
 ## 📊 ML-Ready Dataset
 
@@ -167,58 +132,16 @@ This enables:
 - Faster analytical queries
 - Scalable model experimentation
 
----
+
 
 ## 🚀 How to Run
 
 
-This enables:
-
-- Efficient distributed training
-- Partition pruning
-- Faster analytical queries
-- Scalable model experimentation
-
----
-
-## 🚀 How to Run
-
-
-This enables:
-
-- Efficient distributed training
-- Partition pruning
-- Faster analytical queries
-- Scalable model experimentation
-
----
-
-## 🚀 How to Run
-
-### 1️⃣ Clean Monthly Data (Memory-Safe)
 ```bash
 python -m jobs.clean_year_tmp
 
 📜 License
 
 MIT License
----
 
-# 🔥 This README Signals
 
-✔ Data engineering maturity  
-✔ Distributed systems understanding  
-✔ ML pipeline readiness  
-✔ Production architecture thinking  
-
----
-
-If you'd like, next I can:
-
-- Add an architecture diagram (visual style)
-- Add performance benchmarking section
-- Add ML model training section
-- Optimize for recruiter keywords
-- Create a professional GitHub profile summary
-
-Tell me which direction you want next 🚀
