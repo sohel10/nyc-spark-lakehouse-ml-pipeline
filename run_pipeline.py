@@ -1,11 +1,16 @@
 from pyspark.sql import SparkSession
 from src.logger import get_logger
 import time
+import os
 
 # Initialize logger
 logger = get_logger()
 
 def main():
+
+    # Ensure required folders exist (CRITICAL for CI/CD)
+    os.makedirs("outputs", exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
 
     start_time = time.time()
 
