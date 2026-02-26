@@ -1,3 +1,4 @@
+![CI-CD](https://github.com/sohel10/nyc-spark-lakehouse-ml-pipeline/actions/workflows/cicd.yml/badge.svg)
 # 🚕 NYC Spark Lakehouse & ML Pipeline
 
 Production-style distributed data engineering and ML-ready lakehouse pipeline built with PySpark, Docker, and CI/CD automation using NYC Yellow Taxi data.
@@ -196,7 +197,7 @@ This enables:
 ## 🚀 How to Run
 
 
-```bash
+
 python -m jobs.clean_year_tmp
 
 📜 License
