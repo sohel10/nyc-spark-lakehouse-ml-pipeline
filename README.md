@@ -105,7 +105,7 @@ This pipeline is fully containerized for reproducible deployment.
 
 Build Docker image:
 
-```bash
+
 docker build -t nyc-spark-pipeline .
 Run pipeline inside container:
 docker run nyc-spark-pipeline
