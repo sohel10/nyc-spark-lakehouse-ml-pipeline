@@ -60,15 +60,20 @@ Layer responsibilities:
 
 ## 📊 Dataset Scale
 
-Pipeline processes large-scale NYC Yellow Taxi data:
+The pipeline processes large-scale NYC Yellow Taxi trip data:
 
-- **17,089,605 records processed**
-- Multi-year harmonized parquet datasets
-- Optimized Spark partitioning
-- Distributed execution ready
-- ML-ready structured output
+- **17,089,605 records** ingested and harmonized
+- Year-level standardized parquet dataset
+- Optimized across **72 Spark partitions**
+- Partition-aware dataset design for distributed execution
+- Structured for scalable analytical and ML-ready workflows
 
----
+## ⚙ Example Execution
+
+Below shows a successful yearly ingestion and merge process executed with PySpark:
+
+![Spark Execution](docs/figures/spark.png)
+
 
 ## ⚡ Performance Engineering
 
