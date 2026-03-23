@@ -33,3 +33,7 @@ __pycache__/
 .venv/
 env/
 .vscode/
+airflow.db
+airflow.cfg
+__pycache__/
+*.log

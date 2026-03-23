@@ -1,35 +1,34 @@
-# jobs/build_final.py
-
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
-
+from pyspark.sql.functions import month, col
 
 def main():
 
     spark = SparkSession.builder \
-        .appName("NYC_Taxi_Final_Build") \
-        .master("local[*]") \
-        .config("spark.sql.adaptive.enabled", "true") \
-        .config("spark.sql.shuffle.partitions", "128") \
-        .getOrCreate()
+    .appName("NYC Taxi Pipeline") \
+    .config("spark.sql.adaptive.enabled", "true") \
+    .config("spark.sql.execution.arrow.pyspark.enabled", "false") \
+    .getOrCreate()
 
-    print("Reading cleaned yearly data...")
-    df = spark.read.parquet("data_clean")
+    print("Reading data...")
 
-    print("Repartitioning...")
-    df = df.repartition(128, col("year"), col("month"))
+    df = spark.read.parquet("/home/sohel/nyc-spark-pipeline/data_clean/2009.parquet")
 
-    print("Writing final dataset...")
-    df.write \
-        .mode("overwrite") \
-        .option("compression", "snappy") \
-        .partitionBy("year", "month") \
-        .parquet("data_processed")
+    # ✅ VERY SMALL DATA (CRITICAL)
+    df = df.limit(20000)
+    df.coalesce(1).write.csv("outputs/sample_csv", header=True)
+    df = df.withColumn("month", month(col("Trip_Pickup_DateTime")))
 
-    print("Final build complete.")
+    print("Row count:", df.count())
+
+    # ✅ NO Pandas, NO heavy write
+    df.write.mode("overwrite").csv(
+        "/home/sohel/nyc-spark-pipeline/outputs/sample_csv",
+        header=True
+    )
+
+    print("Saved small CSV safely")
 
     spark.stop()
-
 
 if __name__ == "__main__":
     main()
