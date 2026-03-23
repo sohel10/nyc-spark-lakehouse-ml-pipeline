@@ -40,35 +40,35 @@ jobs:
   # =========================
   # CD (DEPLOY + AIRFLOW)
   # =========================
- CD:
-  needs: CI
-  runs-on: ubuntu-latest
+  CD:
+    needs: CI
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_KEY }}
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
 
-        script: |
-          echo "🚀 Deploying..."
+          script: |
+            echo "🚀 Deploying..."
 
-          cd ~/nyc-deploy
+            cd ~/nyc-deploy
 
-          git pull origin main
+            git pull origin main
 
-          echo "📂 Copy DAGs"
-          mkdir -p ~/airflow/dags
-          cp ~/nyc-deploy/dags/*.py ~/airflow/dags/
+            echo "📂 Copy DAGs"
+            mkdir -p ~/airflow/dags
+            cp ~/nyc-deploy/dags/*.py ~/airflow/dags/
 
-          echo "🔁 Restart API"
-          pkill -f uvicorn || true
-          nohup uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+            echo "🔁 Restart API"
+            pkill -f uvicorn || true
+            nohup uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
 
-          echo "🧠 Trigger Airflow"
-          export AIRFLOW_HOME=~/airflow
-          airflow dags trigger nyc_taxi_pipeline
+            echo "🧠 Trigger Airflow"
+            export AIRFLOW_HOME=~/airflow
+            airflow dags trigger nyc_taxi_pipeline
 
-          echo "✅ Done"
+            echo "✅ Done"
