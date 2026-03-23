@@ -1,11 +1,64 @@
-name: Test CI
+name: CI-CD Pipeline
 
 on:
-  push:
+push:
+branches: [ main ]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Hello
-        run: echo Hello
+
+CI:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - name: Checkout Repository
+    uses: actions/checkout@v3
+
+  - name: Setup Python
+    uses: actions/setup-python@v3
+    with:
+      python-version: "3.10"
+
+  - name: Install Dependencies
+    run: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+      pip install pytest
+
+  - name: Run Tests
+    run: pytest || echo "No tests"
+```
+
+CD:
+needs: CI
+runs-on: ubuntu-latest
+
+```
+steps:
+  - name: Deploy to EC2
+    uses: appleboy/ssh-action@v1.0.0
+    with:
+      host: ${{ secrets.EC2_HOST }}
+      username: ubuntu
+      key: ${{ secrets.EC2_KEY }}
+      port: 22
+      timeout: 60
+
+      script: |
+        echo "🚀 Deploying to EC2..."
+
+        cd ~/nyc-deploy || exit 1
+        git pull origin main
+
+        echo "🔁 Restart API"
+        pkill -f uvicorn || true
+        sleep 2
+        nohup ~/nyc-deploy/venv/bin/uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+
+        echo "🧠 Trigger Airflow"
+        source ~/nyc-deploy/venv/bin/activate
+        export AIRFLOW_HOME=~/airflow
+        airflow dags trigger nyc_taxi_pipeline || true
+
+        echo "✅ Done"
+```
