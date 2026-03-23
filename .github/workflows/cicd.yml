@@ -1,11 +1,10 @@
 name: Test CI
-
 on:
-push:
-
+  push:
+    
 jobs:
-test:
-runs-on: ubuntu-latest
-steps:
-- name: Hello
-run: echo "Hello world"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hello
+        run: echo Hello
