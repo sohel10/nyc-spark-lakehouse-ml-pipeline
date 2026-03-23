@@ -1,79 +1,101 @@
 name: Spark Pipeline CI-CD
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+push:
+branches:
+- main
+pull_request:
 
 jobs:
 
-  # =========================
-  # CI (LIGHT CHECKS ONLY)
-  # =========================
-  CI:
-    runs-on: ubuntu-latest
+# =========================
 
-    steps:
+# CI (LIGHT CHECKS ONLY)
 
-      - name: Checkout Code
-        uses: actions/checkout@v3
+# =========================
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
+CI:
+runs-on: ubuntu-latest
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+```
+steps:
+  - name: Checkout Code
+    uses: actions/checkout@v3
 
-      # 🔥 DO NOT RUN HEAVY SPARK HERE
-      - name: Validate pipeline code
-        run: |
-          python -m py_compile run_pipeline.py
+  - name: Setup Python
+    uses: actions/setup-python@v4
+    with:
+      python-version: "3.10"
 
-      - name: Run Tests
-        run: |
-          pytest || echo "No tests yet"
+  - name: Install dependencies
+    run: |
+      pip install -r requirements.txt
 
+  # 🔥 DO NOT RUN HEAVY SPARK HERE
+  - name: Validate pipeline code
+    run: |
+      python -m py_compile run_pipeline.py
 
-  # =========================
-  # CD (DEPLOY + AIRFLOW)
-  # =========================
-  CD:
-    needs: CI
-    runs-on: ubuntu-latest
+  - name: Run Tests
+    run: |
+      pytest || echo "No tests yet"
+```
 
-    steps:
+# =========================
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.0
+# CD (DEPLOY + AIRFLOW)
 
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
+# =========================
 
-          script: |
-            echo "🚀 Deploying..."
+CD:
+needs: CI
+runs-on: ubuntu-latest
 
-            cd ~/nyc-deploy
+```
+steps:
+  - name: Deploy to EC2
+    uses: appleboy/ssh-action@v1.0.0
 
-            git pull origin main
+    with:
+      host: ${{ secrets.EC2_HOST }}
+      username: ubuntu
+      key: ${{ secrets.EC2_KEY }}
+      port: 22
+      timeout: 60
+      command_timeout: 30
+      debug: true
 
-            echo "📂 Copy DAGs"
-            mkdir -p ~/airflow/dags
-            cp ~/nyc-deploy/dags/*.py ~/airflow/dags/
+      script: |
+        echo "🚀 Deploying..."
 
-            echo "🔁 Restart API"
-            pkill -f uvicorn || true
-            sleep 2
-            nohup ~/nyc-deploy/venv/bin/uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+        # Clone repo if first time
+        if [ ! -d "$HOME/nyc-deploy/.git" ]; then
+          echo "📥 Cloning repository..."
+          git clone https://github.com/sohel10/nyc-spark-lakehouse-ml-pipeline.git $HOME/nyc-deploy
+        fi
 
-            echo "🧠 Trigger Airflow"
-            source ~/nyc-deploy/venv/bin/activate
-            export AIRFLOW_HOME=~/airflow
-            airflow dags trigger nyc_taxi_pipeline || true
+        cd $HOME/nyc-deploy || exit 1
 
-            echo "✅ Done"
+        echo "🔄 Pull latest code"
+        git pull origin main
+
+        echo "📂 Copy DAGs"
+        mkdir -p $HOME/airflow/dags
+        cp $HOME/nyc-deploy/dags/*.py $HOME/airflow/dags/ || true
+
+        echo "🔁 Restart API"
+        pkill -f uvicorn || true
+        sleep 2
+        nohup $HOME/nyc-deploy/venv/bin/uvicorn ml.api:app \
+          --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+
+        echo "🧠 Trigger Airflow"
+        source $HOME/nyc-deploy/venv/bin/activate
+        export AIRFLOW_HOME=$HOME/airflow
+        airflow dags trigger nyc_taxi_pipeline || true
+
+        echo "🩺 Health check"
+        curl -f http://localhost:8000 || echo "API not ready yet"
+
+        echo "✅ Done"
+```
