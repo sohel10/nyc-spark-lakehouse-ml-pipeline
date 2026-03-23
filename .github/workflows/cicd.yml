@@ -56,6 +56,8 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
 
           script: |
+            set +e
+
             echo "🚀 Deploying..."
 
             cd ~/nyc-deploy
@@ -67,12 +69,16 @@ jobs:
             cp ~/nyc-deploy/dags/*.py ~/airflow/dags/
 
             echo "🔁 Restart API"
-            pkill -f uvicorn > /dev/null 2>&1 || true
+            pkill -f uvicorn > /dev/null 2>&1
             sleep 2
             nohup uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
 
             echo "🧠 Trigger Airflow"
-            export AIRFLOW_HOME=~/airflow
-            airflow dags trigger nyc_taxi_pipeline > /dev/null 2>&1 || true
 
-            echo "✅ Done"  
+            # 🔥 IMPORTANT: load environment
+            source ~/.bashrc
+
+            export AIRFLOW_HOME=~/airflow
+            airflow dags trigger nyc_taxi_pipeline > /dev/null 2>&1
+
+            echo "✅ Done"
