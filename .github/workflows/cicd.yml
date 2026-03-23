@@ -71,13 +71,11 @@ jobs:
             echo "🔁 Restart API"
             pkill -f uvicorn > /dev/null 2>&1
             sleep 2
-            nohup uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+
+            nohup python -m uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
 
             echo "🧠 Trigger Airflow"
-
-            # 🔥 IMPORTANT: load environment
             source ~/.bashrc
-
             export AIRFLOW_HOME=~/airflow
             airflow dags trigger nyc_taxi_pipeline > /dev/null 2>&1
 
