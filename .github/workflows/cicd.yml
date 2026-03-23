@@ -1,71 +1,11 @@
-name: Spark Pipeline CI-CD
+name: Test CI
 
 on:
 push:
-branches:
-- main
-pull_request:
 
 jobs:
-CI:
+test:
 runs-on: ubuntu-latest
-
-```
 steps:
-  - name: Checkout Code
-    uses: actions/checkout@v3
-
-  - name: Setup Python
-    uses: actions/setup-python@v4
-    with:
-      python-version: "3.10"
-
-  - name: Install dependencies
-    run: pip install -r requirements.txt
-
-  - name: Validate pipeline code
-    run: python -m py_compile run_pipeline.py
-
-  - name: Run Tests
-    run: pytest || echo "No tests yet"
-```
-
-CD:
-needs: CI
-runs-on: ubuntu-latest
-
-```
-steps:
-  - name: Deploy to EC2
-    uses: appleboy/ssh-action@v1.0.0
-    with:
-      host: ${{ secrets.EC2_HOST }}
-      username: ubuntu
-      key: ${{ secrets.EC2_KEY }}
-      port: 22
-      timeout: 60
-      command_timeout: 30
-      debug: true
-
-      script: |
-        echo "🚀 Deploying..."
-
-        cd ~/nyc-deploy || exit 1
-        git pull origin main
-
-        echo "📂 Copy DAGs"
-        mkdir -p ~/airflow/dags
-        cp ~/nyc-deploy/dags/*.py ~/airflow/dags/ || true
-
-        echo "🔁 Restart API"
-        pkill -f uvicorn || true
-        sleep 2
-        nohup ~/nyc-deploy/venv/bin/uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
-
-        echo "🧠 Trigger Airflow"
-        source ~/nyc-deploy/venv/bin/activate
-        export AIRFLOW_HOME=~/airflow
-        airflow dags trigger nyc_taxi_pipeline || true
-
-        echo "✅ Done"
-```
+- name: Hello
+run: echo "Hello world"
