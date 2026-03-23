@@ -1,30 +1,11 @@
-name: Spark Pipeline CI
+name: Test CI
 
 on:
-push:
-branches:
-- main
+  push:
 
 jobs:
-CI:
-runs-on: ubuntu-latest
-
-```
-steps:
-  - name: Checkout Code
-    uses: actions/checkout@v3
-
-  - name: Setup Python
-    uses: actions/setup-python@v4
-    with:
-      python-version: "3.10"
-
-  - name: Install dependencies
-    run: pip install -r requirements.txt
-
-  - name: Validate pipeline code
-    run: python -m py_compile run_pipeline.py
-
-  - name: Run Tests
-    run: pytest || echo "No tests yet"
-```
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hello
+        run: echo Hello
