@@ -11,7 +11,7 @@ jobs:
 CI:
 runs-on: ubuntu-latest
 
-```
+
 steps:
   - name: Checkout Code
     uses: actions/checkout@v3
@@ -29,13 +29,13 @@ steps:
 
   - name: Run Tests
     run: pytest || echo "No tests yet"
-```
+
 
 CD:
 needs: CI
 runs-on: ubuntu-latest
 
-```
+
 steps:
   - name: Deploy to EC2
     uses: appleboy/ssh-action@v1.0.0
@@ -66,4 +66,4 @@ steps:
         airflow dags trigger nyc_taxi_pipeline || true
 
         echo "✅ Done"
-```
+
