@@ -28,7 +28,7 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      # 🔥 DO NOT RUN SPARK HERE
+      # 🔥 DO NOT RUN HEAVY SPARK HERE
       - name: Validate pipeline code
         run: |
           python -m py_compile run_pipeline.py
@@ -36,6 +36,7 @@ jobs:
       - name: Run Tests
         run: |
           pytest || echo "No tests yet"
+
 
   # =========================
   # CD (DEPLOY + AIRFLOW)
@@ -45,8 +46,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
+
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
@@ -65,10 +68,11 @@ jobs:
 
             echo "🔁 Restart API"
             pkill -f uvicorn || true
+            sleep 2
             nohup uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
 
             echo "🧠 Trigger Airflow"
             export AIRFLOW_HOME=~/airflow
-            airflow dags trigger nyc_taxi_pipeline
+            airflow dags trigger nyc_taxi_pipeline || true
 
             echo "✅ Done"
