@@ -2,24 +2,23 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 import joblib
 import pandas as pd
-import numpy as np
 import time
 from pathlib import Path
 from sqlalchemy import create_engine
 from datetime import datetime
 
 # =========================
-# App
-# =========================
-# =========================
 # Database
 # =========================
-DB_URL = "postgresql://postgres:1234@localhost:5432/nyc_taxi"
+DB_URL = "postgresql://postgres:postgres@localhost:5432/nyc_db"
 engine = create_engine(DB_URL)
 
+# =========================
+# App
+# =========================
 app = FastAPI(
     title="NYC Taxi Fare Prediction API",
     version="1.0.0"
@@ -27,24 +26,36 @@ app = FastAPI(
 
 app.state.build_id = str(int(time.time()))
 
-# Optional UI (keep for future)
+# Static + Templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # =========================
-# Config
+# Model Path
 # =========================
 MODEL_PATH = Path("/home/sohel/nyc-spark-pipeline/ml/model.pkl")
 
 # =========================
-# Request Schema
+# Input Schema (WITH VALIDATION)
 # =========================
 class TaxiInput(BaseModel):
     passenger_count: int
     trip_distance: float
 
+    @validator("passenger_count")
+    def validate_passenger(cls, v):
+        if v < 1 or v > 6:
+            raise ValueError("Passenger count must be between 1 and 6")
+        return v
+
+    @validator("trip_distance")
+    def validate_distance(cls, v):
+        if v <= 0 or v > 100:
+            raise ValueError("Trip distance must be between 0 and 100 miles")
+        return v
+
 # =========================
-# Globals
+# Global Model
 # =========================
 model = None
 
@@ -59,44 +70,54 @@ def load_model():
         raise RuntimeError("❌ Model file not found")
 
     model = joblib.load(MODEL_PATH)
-
     print("✅ Model loaded successfully")
 
 # =========================
-# API Endpoints
+# Health Check
 # =========================
-
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "model_loaded": model is not None
+    }
 
 # =========================
-# Prediction API
+# Prediction Endpoint
 # =========================
 @app.post("/predict")
 def predict(data: TaxiInput):
-    
-    input_df = pd.DataFrame([{
-        "passenger_count": data.passenger_count,
-        "trip_distance": data.trip_distance
-    }])
+    try:
+        # Prepare input
+        input_df = pd.DataFrame([{
+            "passenger_count": data.passenger_count,
+            "trip_distance": data.trip_distance
+        }])
 
-    prediction = model.predict(input_df)[0]
-    result = float(prediction)
+        # Predict
+        prediction = model.predict(input_df)[0]
 
-    # ✅ Save to PostgreSQL
-    save_df = pd.DataFrame([{
-        "passenger_count": data.passenger_count,
-        "trip_distance": data.trip_distance,
-        "predicted_fare": result,
-        "created_at": datetime.now()
-    }])
+        # Round + safety floor
+        result = round(float(prediction), 2)
+        result = max(result, 3.0)  # minimum fare
 
-    save_df.to_sql("taxi_prediction_logs", engine, if_exists="append", index=False)
+        # Save to DB
+        save_df = pd.DataFrame([{
+            "passenger_count": data.passenger_count,
+            "trip_distance": data.trip_distance,
+            "predicted_fare": result,
+            "created_at": datetime.now()
+        }])
 
-    return {"predicted_fare": result}
+        save_df.to_sql("taxi_prediction_logs", engine, if_exists="append", index=False)
+
+        return {"predicted_fare": result}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # =========================
-# UI (optional)
+# UI Home
 # =========================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -107,6 +128,10 @@ def home(request: Request):
             "build_id": app.state.build_id
         }
     )
+
+# =========================
+# History Endpoint
+# =========================
 @app.get("/history")
 def get_history():
     df = pd.read_sql(
@@ -114,7 +139,6 @@ def get_history():
         engine
     )
 
-    # ✅ Convert to ISO format (JS friendly)
     df["created_at"] = df["created_at"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     return df.to_dict(orient="records")

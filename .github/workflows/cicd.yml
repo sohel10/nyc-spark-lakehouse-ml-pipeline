@@ -1,64 +1,63 @@
 name: CI-CD Pipeline
 
 on:
-push:
-branches: [ main ]
+  push:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
 
-CI:
-runs-on: ubuntu-latest
+  CI:
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - name: Checkout Repository
-    uses: actions/checkout@v3
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-  - name: Setup Python
-    uses: actions/setup-python@v3
-    with:
-      python-version: "3.10"
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
 
-  - name: Install Dependencies
-    run: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-      pip install pytest
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn pytest httpx
+          pip install -r requirements.txt
 
-  - name: Run Tests
-    run: pytest || echo "No tests"
-```
 
-CD:
-needs: CI
-runs-on: ubuntu-latest
+  CD:
+    needs: CI
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - name: Deploy to EC2
-    uses: appleboy/ssh-action@v1.0.0
-    with:
-      host: ${{ secrets.EC2_HOST }}
-      username: ubuntu
-      key: ${{ secrets.EC2_KEY }}
-      port: 22
-      timeout: 60
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      script: |
-        echo "🚀 Deploying to EC2..."
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-        cd ~/nyc-deploy || exit 1
-        git pull origin main
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-        echo "🔁 Restart API"
-        pkill -f uvicorn || true
-        sleep 2
-        nohup ~/nyc-deploy/venv/bin/uvicorn ml.api:app --host 0.0.0.0 --port 8000 > app.log 2>&1 &
+      - name: Build Docker Image
+        run: |
+          docker build -t object-detection-api .
 
-        echo "🧠 Trigger Airflow"
-        source ~/nyc-deploy/venv/bin/activate
-        export AIRFLOW_HOME=~/airflow
-        airflow dags trigger nyc_taxi_pipeline || true
+      - name: Tag Docker Image
+        run: |
+          docker tag object-detection-api:latest \
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-        echo "✅ Done"
-```
+      - name: Push Image to ECR
+        run: |
+          docker push \
+          ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest

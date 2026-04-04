@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 # Config
 # =========================
 MODEL_PATH = "/home/sohel/nyc-spark-pipeline/ml/model.pkl"
-DB_URL = "postgresql://postgres:1234@localhost:5432/nyc_taxi"
+DB_URL = "postgresql://postgres:postgres@localhost:5432/nyc_db"
 
 engine = create_engine(DB_URL)
 

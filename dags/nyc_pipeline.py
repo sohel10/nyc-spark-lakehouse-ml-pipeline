@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 # =========================
 # Database Connection
 # =========================
-engine = create_engine("postgresql://postgres:1234@localhost:5432/nyc_taxi")
+engine = create_engine("postgresql://postgres:postgres@localhost:5432/nyc_db")
 
 # =========================
 # Default Args (Production)
