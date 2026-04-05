@@ -6,7 +6,7 @@ def main():
         .getOrCreate()
 
     # Read processed analytical layer
-    df = spark.read.parquet("data_clean/2009.parquet")
+    df = spark.read.parquet("data_processed")
 
     total_rows = df.count()
     print("Total rows:", total_rows)

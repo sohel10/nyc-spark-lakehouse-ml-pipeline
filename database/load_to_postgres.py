@@ -1,13 +1,21 @@
 import pandas as pd
-import glob
 from sqlalchemy import create_engine
 
-files = glob.glob("/home/sohel/nyc-spark-pipeline/outputs/sample_csv/*.csv")
+# Read parquet
+df = pd.read_parquet("data_single_10m/taxi_10m.parquet")
 
-df = pd.concat([pd.read_csv(f) for f in files])
+print("Loaded rows:", df.shape)
 
-engine = create_engine("postgresql://postgres:1234@localhost:5432/nyc_taxi")
+# Connect to PostgreSQL
+engine = create_engine("postgresql://postgres:postgres@localhost:5432/nyc_db")
 
-df.to_sql("taxi_data", engine, if_exists="replace", index=False)
+# Load with chunking (IMPORTANT)
+df.to_sql(
+    "taxi_data",
+    engine,
+    if_exists="replace",
+    index=False,
+    chunksize=100000
+)
 
-print("Loaded to Postgres")
+print("✅ Loaded to PostgreSQL")

@@ -64,12 +64,20 @@
             text-align: center;
         }
 
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+
         .table-container {
             background: white;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 500px;
+            width: 600px;
         }
 
         table {
@@ -97,10 +105,13 @@
     <h2>🚖 Taxi Fare Predictor</h2>
 
     <label>Passenger Count</label>
-    <input type="number" id="passenger_count" placeholder="e.g. 2">
+    <input type="number" id="passenger_count" placeholder="1–6 only">
 
     <label>Trip Distance (miles)</label>
-    <input type="number" id="trip_distance" step="0.1" placeholder="e.g. 3.5">
+    <input type="number" id="trip_distance" step="0.1" placeholder="> 0">
+
+    <label>Pickup Time</label>
+    <input type="datetime-local" id="pickup_ts">
 
     <button onclick="predictFare()">Predict Fare</button>
 
@@ -117,7 +128,8 @@
                 <th>Passenger</th>
                 <th>Distance</th>
                 <th>Fare ($)</th>
-                <th>Time</th>
+                <th>Pickup Time</th>
+                <th>Created</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -128,9 +140,12 @@
 async function predictFare() {
     const passenger_count = document.getElementById("passenger_count").value;
     const trip_distance = document.getElementById("trip_distance").value;
+    const pickup_ts = document.getElementById("pickup_ts").value;
+    const resultDiv = document.getElementById("result");
 
-    if (!passenger_count || !trip_distance) {
-        document.getElementById("result").innerText = "⚠️ Please fill all fields";
+    if (!passenger_count || !trip_distance || !pickup_ts) {
+        resultDiv.innerText = "⚠️ Please fill all fields";
+        resultDiv.className = "error";
         return;
     }
 
@@ -142,20 +157,27 @@ async function predictFare() {
             },
             body: JSON.stringify({
                 passenger_count: parseInt(passenger_count),
-                trip_distance: parseFloat(trip_distance)
+                trip_distance: parseFloat(trip_distance),
+                pickup_ts: pickup_ts
             })
         });
 
         const data = await response.json();
 
-        document.getElementById("result").innerText =
-            "💰 Predicted Fare: $" + data.predicted_fare.toFixed(2);
+        if (!response.ok) {
+            resultDiv.innerText = "⚠️ " + (data.detail?.[0]?.msg || "Invalid input");
+            resultDiv.className = "error";
+            return;
+        }
 
-        loadHistory();  // ✅ refresh table
+        resultDiv.innerText = "💰 Predicted Fare: $" + data.predicted_fare.toFixed(2);
+        resultDiv.className = "success";
+
+        loadHistory();
 
     } catch (error) {
-        document.getElementById("result").innerText =
-            "❌ Error getting prediction";
+        resultDiv.innerText = "❌ Server error";
+        resultDiv.className = "error";
     }
 }
 
@@ -173,6 +195,7 @@ async function loadHistory() {
             <td>${row.passenger_count}</td>
             <td>${row.trip_distance}</td>
             <td>${row.predicted_fare.toFixed(2)}</td>
+            <td>${new Date(row.pickup_ts).toLocaleString()}</td>
             <td>${new Date(row.created_at).toLocaleString()}</td>
         `;
 

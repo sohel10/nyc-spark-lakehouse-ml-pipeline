@@ -24,40 +24,70 @@ This project demonstrates scalable Spark processing, schema evolution handling, 
 
 ## 📌 Project Overview
 
-NYC Yellow Taxi data is published as monthly parquet files across multiple years. Although already in parquet format, schemas evolve over time and require harmonization for scalable analytics and ML.
+NYC Yellow Taxi data is distributed as monthly parquet files across multiple years. 
+Although stored in parquet format, schemas evolve over time, requiring harmonization 
+for scalable analytics and machine learning.
 
-This project implements a **production-style lakehouse architecture** with automated deployment capabilities.
+This project implements a **production-grade lakehouse architecture** that supports 
+large-scale data processing, feature engineering, and real-time ML inference.
 
-Key capabilities:
+### 🚀 Key Capabilities
 
-- Handles schema drift across years
-- Prevents Spark memory crashes during ingestion
-- Optimizes partitioning for distributed execution
-- Builds ML-ready analytical datasets
-- Containerized deployment using Docker
-- Automated testing and CI/CD pipeline execution
-- Production-style logging and monitoring
+- Handles schema drift across multiple years of taxi data
+- Prevents Spark memory failures during large-scale ingestion
+- Optimizes partitioning for distributed processing (PySpark)
+- Builds ML-ready datasets for modeling
+- Deploys real-time prediction API using FastAPI
+- Stores predictions in PostgreSQL for monitoring and analysis
+- Supports containerized deployment with Docker (optional)
+- Implements production-style logging and modular pipeline design
 
 ---
 
-## 🏗 Architecture Overview
+## 💻 Real-Time Prediction API (Taxi Fare Estimation)
 
-This pipeline follows a layered lakehouse architecture:
-Raw Data → Ingestion Layer → Harmonization Layer → Analytical Layer → ML-Ready Dataset
+The system includes a **real-time prediction service** that estimates taxi fares 
+based on user inputs.
+
+### 🔮 Features
+
+- Accepts user inputs:
+  - Passenger count
+  - Trip distance
+  - Pickup timestamp
+- Performs feature engineering (hour, weekday, month)
+- Generates predictions using a trained XGBoost model
+- Logs predictions into PostgreSQL for tracking and analysis
+- Provides a simple web UI for interaction
+
+### 📊 Application Interface
 
 <p align="center">
-<img src="docs/figures/pipeline.png" width="600"/>
+<img src="docs/figures/app.png" width="600"/>
 </p>
 
-Layer responsibilities:
-
-- Raw ingestion
-- Schema harmonization
-- Partition optimization
-- Analytical dataset construction
-- ML-ready output generation
-
 ---
+
+## 🏗 System Architecture (End-to-End)
+
+This project follows a **modern ML system architecture**:
+
+```text
+Raw Data (NYC Taxi Parquet)
+        ↓
+PySpark Data Pipeline
+        ↓
+PostgreSQL (Analytical Storage)
+        ↓
+Feature Engineering (Time-based Features)
+        ↓
+XGBoost Model Training
+        ↓
+FastAPI (Real-Time Inference API)
+        ↓
+Web UI (User Interaction)
+        ↓
+Prediction Logging (PostgreSQL)
 
 ## 📊 Dataset Scale
 
@@ -100,108 +130,56 @@ NYC Taxi schemas evolve across years. This pipeline handles schema evolution usi
 
 ---
 
+## 📊 Monitoring Dashboard
+Real-time monitoring of API requests and system performance using Prometheus and Grafana:
+
+### 📈 Monitoring & System Metrics (Grafana)
+
+
+<p align="center">
+<img src="docs/figures/grapna.png" width="600"/>
+</p>
+
+
+
+
 ## 🐳 Docker Containerized Deployment
 
 This pipeline is fully containerized for reproducible deployment.
 
 Build Docker image:
 
+## 🔁 CI/CD Pipeline
 
-docker build -t nyc-spark-pipeline .
-Run pipeline inside container:
-docker run nyc-spark-pipeline
-## CI/CD Automation
+This project uses **GitHub Actions for continuous integration and deployment (CI/CD)** to automate the build and deployment process.
 
-CI/CD implemented using GitHub Actions.
+---
 
-Automatically runs on every push:
+### ⚙️ Pipeline Overview
 
-Executes Spark pipeline
-
-Runs automated tests
-
-Builds Docker container
-
-Validates deployment readiness
-
-Workflow file:
-.github/workflows/cicd.yml
-## Logging and Monitoring
-
-Pipeline includes automated logging:
-Logs include:
-
-Execution status
-
-Spark version
-
-Row count processed
-
-Execution time
-
-Error handling
-
-Example log output:
-
-INFO Pipeline started
-INFO Spark version: 3.5.1
-INFO Row count processed: 5000000
-INFO Pipeline execution completed successfully
-INFO Pipeline execution time: 4.81 seconds
-
-```` text
-nyc-spark-lakehouse-ml-pipeline/
-│
-├── jobs/              # Spark job orchestration
-├── src/               # Core transformations & logging
-├── tests/             # Automated tests
-├── logs/              # Execution logs
-├── outputs/           # Pipeline outputs
-├── docs/              # Architecture images
-├── Dockerfile         # Container configuration
-├── requirements.txt
-├── .github/workflows/ # CI/CD pipeline
-└── README.md
-
-````
-
-## 🎯 What This Project Demonstrates
-
-- Distributed data engineering workflows
-- Handling large-scale multi-year datasets
-- Schema drift resolution
-- Spark memory management strategies
-- Partition-aware dataset design
-- Lakehouse architectural layering
-- Production-style pipeline structuring
-
-
-
-## 📊 ML-Ready Dataset
-
-The final `data_processed/` layer is partitioned by:
-
-year=YYYY/
-month=MM/
-
-
-This enables:
-
-- Efficient distributed training
-- Partition pruning
-- Faster analytical queries
-- Scalable model experimentation
-
-
+```text
+Local Development
+        ↓
+    git push
+        ↓
+GitHub Actions (CI/CD)
+        ↓
+Build Docker Image
+        ↓
+Push to AWS ECR
+        ↓
+Deploy to AWS EC2
+        ↓
+Run FastAPI + ML Model + Monitoring
 
 ## 🚀 How to Run
 
+```bash
+git clone <repo>
+cd nyc-spark-pipeline
 
+docker-compose up --build
 
-python -m jobs.clean_year_tmp
-
-📜 License
-
-MIT License
-
-
+API → http://localhost:8000/predict
+Grafana → http://localhost:3000
+Airflow → http://localhost:8080

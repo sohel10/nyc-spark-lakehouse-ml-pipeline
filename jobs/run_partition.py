@@ -25,12 +25,12 @@ def main():
     for year in years:
 
         try:
-            year_path = f"{base_path}/{year}/*.parquet"
+            year_path = f"{base_path}/{year}"
             print(f"\nReading year: {year}")
 
             df_year = spark.read \
                 .format("parquet") \
-                .option("mergeSchema", "false") \
+                .option("mergeSchema", "true") \
                 .load(year_path)
 
             # Normalize numeric columns safely
@@ -54,7 +54,7 @@ def main():
 
             # Write safely
             df_year.write \
-                .mode("append") \
+                .mode("overwrite") \
                 .partitionBy("year", "month") \
                 .parquet("data_processed")
 

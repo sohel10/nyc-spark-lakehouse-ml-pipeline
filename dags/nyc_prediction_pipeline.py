@@ -30,13 +30,12 @@ def load_data(**context):
 # Task 2 — Predict
 # =========================
 def run_prediction(**context):
-    df = pd.read_csv("/tmp/new_data.csv")
+    import subprocess
 
-    model = joblib.load(MODEL_PATH)
-
-    df["predicted_fare"] = model.predict(df)
-
-    df.to_csv("/tmp/predictions.csv", index=False)
+    subprocess.run([
+        "/home/sohel/miniconda3/envs/mimic-spark/bin/python",
+        "/home/sohel/nyc-spark-pipeline/ml/predict.py"
+    ], check=True)
 
 # =========================
 # Task 3 — Save to PostgreSQL
@@ -65,7 +64,7 @@ default_args = {
 dag = DAG(
     "nyc_taxi_prediction_pipeline",
     default_args=default_args,
-    schedule_interval="@daily",   # run daily
+    schedule="@daily",   # run daily
     catchup=False
 )
 

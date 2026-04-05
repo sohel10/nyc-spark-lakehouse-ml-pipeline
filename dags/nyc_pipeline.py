@@ -8,12 +8,13 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 # =========================
-# Database Connection
+# CONFIG (SINGLE SOURCE OF TRUTH 🔥)
 # =========================
-engine = create_engine("postgresql://postgres:postgres@localhost:5432/nyc_db")
+DB_URL = "postgresql://postgres:postgres@localhost:5432/nyc_db"
+engine = create_engine(DB_URL)
 
 # =========================
-# Default Args (Production)
+# DEFAULT ARGS
 # =========================
 default_args = {
     "owner": "sohel",
@@ -23,26 +24,23 @@ default_args = {
 }
 
 # =========================
-# Task 0 — Create Tables
+# TASK 0 — CREATE TABLES
 # =========================
 def create_tables():
     env = os.environ.copy()
-    env["PGPASSWORD"] = "1234"
+    env["PGPASSWORD"] = "postgres"
 
     subprocess.run([
         "psql",
+        "-h", "localhost",   # ✅ ADD THIS LINE
+        "-p", "5432",        # ✅ (optional but good)
         "-U", "postgres",
-        "-d", "nyc_taxi",
+        "-d", "nyc_db",
         "-f", "/home/sohel/nyc-spark-pipeline/sql/new_tables.sql"
     ], check=True, env=env)
 
 # =========================
-# Task 1 — Build Spark Data (BashOperator)
-# =========================
-# (Already handled in DAG)
-
-# =========================
-# Task 2 — Load Data to Postgres
+# TASK 2 — LOAD DATA
 # =========================
 def run_load():
     subprocess.run([
@@ -51,7 +49,7 @@ def run_load():
     ], check=True)
 
 # =========================
-# Task 3 — Data Validation (NEW 🔥)
+# TASK 3 — VALIDATION
 # =========================
 def validate_data():
     df = pd.read_sql("SELECT * FROM taxi_data LIMIT 1000", engine)
@@ -59,103 +57,83 @@ def validate_data():
     if df.empty:
         raise ValueError("❌ Data validation failed: table is empty")
 
-    # Missing values
-    if df["trip_distance"].isnull().sum() > 0:
-        raise ValueError("❌ Missing values in trip_distance")
+    if df["trip_distance"].isnull().any():
+        raise ValueError("❌ Missing trip_distance")
 
-    if df["passenger_count"].isnull().sum() > 0:
-        raise ValueError("❌ Missing values in passenger_count")
+    if df["passenger_count"].isnull().any():
+        raise ValueError("❌ Missing passenger_count")
 
-    # Invalid values
     if (df["trip_distance"] <= 0).any():
-        raise ValueError("❌ Invalid trip_distance (<=0)")
+        raise ValueError("❌ Invalid trip_distance")
 
     if (df["passenger_count"] <= 0).any():
-        raise ValueError("❌ Invalid passenger_count (<=0)")
+        raise ValueError("❌ Invalid passenger_count")
 
     print("✅ Data validation passed")
 
 # =========================
-# Task 4 — Run SQL Analysis
+# TASK 4 — SQL ANALYSIS
 # =========================
 def run_sql():
     env = os.environ.copy()
-    env["PGPASSWORD"] = "1234"
+    env["PGPASSWORD"] = "postgres"
 
     subprocess.run([
         "psql",
         "-U", "postgres",
-        "-d", "nyc_taxi",
+        "-d", "nyc_db",
         "-f", "/home/sohel/nyc-spark-pipeline/sql/analysis.sql"
     ], check=True, env=env)
 
 # =========================
-# Task 5 — Train Model
-# =========================
-def run_ml():
-    subprocess.run([
-        "/home/sohel/miniconda3/envs/mimic-spark/bin/python",
-        "/home/sohel/nyc-spark-pipeline/ml/train_model.py"
-    ], check=True)
-
-# =========================
-# DAG Definition
+# DAG
 # =========================
 with DAG(
     dag_id="nyc_taxi_pipeline",
     default_args=default_args,
-    schedule=None,   # manual or weekly
+    schedule=None,
     catchup=False,
-    description="NYC Taxi End-to-End Training Pipeline with Validation"
+    description="NYC Taxi End-to-End ML Pipeline"
 ) as dag:
 
-    # Task 0: Create tables
     create_table_task = PythonOperator(
         task_id="create_tables",
         python_callable=create_tables
     )
 
-    # Task 1: Build Spark Data
     build_task = BashOperator(
-        task_id="build_spark_data",
-        bash_command="""
-        spark-submit \
-        --master local[*] \
-        --driver-memory 24g \
-        --executor-memory 16g \
-        --conf spark.sql.shuffle.partitions=200 \
-        /home/sohel/nyc-spark-pipeline/jobs/build_final.py
-        """
+    task_id="build_spark_data",
+    bash_command="""
+    spark-submit \
+    --master local[*] \
+    --driver-memory 4g \
+    --executor-memory 2g \
+    /home/sohel/nyc-spark-pipeline/jobs/build_final.py
+    """
     )
 
-    # Task 2: Load into PostgreSQL
     load_task = PythonOperator(
         task_id="load_postgres",
         python_callable=run_load
     )
 
-    # Task 3: Validate Data
     validate_task = PythonOperator(
         task_id="validate_data",
         python_callable=validate_data
     )
 
-    # Task 4: SQL Analysis
     sql_task = PythonOperator(
         task_id="run_sql_analysis",
         python_callable=run_sql
     )
 
-    # Task 5: Train Model
     ml_task = BashOperator(
-        task_id="train_xgboost_model",
+        task_id="train_model",
         bash_command="""
         /home/sohel/miniconda3/envs/mimic-spark/bin/python \
         /home/sohel/nyc-spark-pipeline/ml/train_model.py
         """
     )
 
-    # =========================
-    # FINAL WORKFLOW
-    # =========================
+    # FLOW
     create_table_task >> build_task >> load_task >> validate_task >> sql_task >> ml_task

@@ -26,21 +26,27 @@ app = FastAPI(
 
 app.state.build_id = str(int(time.time()))
 
-# Static + Templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 # =========================
-# Model Path
+# Paths
 # =========================
-MODEL_PATH = Path("/home/sohel/nyc-spark-pipeline/ml/model.pkl")
+BASE_DIR = Path(__file__).resolve().parent
 
+MODEL_PATH = BASE_DIR.parent / "ml" / "model.pkl"
+FEATURES_PATH = BASE_DIR.parent / "ml" / "features.pkl"
 # =========================
-# Input Schema (WITH VALIDATION)
+# Input Schema
 # =========================
 class TaxiInput(BaseModel):
     passenger_count: int
     trip_distance: float
+    pickup_ts: str  # 🔥 NEW
 
     @validator("passenger_count")
     def validate_passenger(cls, v):
@@ -55,32 +61,57 @@ class TaxiInput(BaseModel):
         return v
 
 # =========================
-# Global Model
+# Globals
 # =========================
 model = None
+feature_cols = None
 
 # =========================
 # Startup
 # =========================
 @app.on_event("startup")
 def load_model():
-    global model
+    global model, feature_cols
 
     if not MODEL_PATH.exists():
         raise RuntimeError("❌ Model file not found")
 
+    if not FEATURES_PATH.exists():
+        raise RuntimeError("❌ Feature list not found")
+
     model = joblib.load(MODEL_PATH)
-    print("✅ Model loaded successfully")
+    feature_cols = joblib.load(FEATURES_PATH)
+
+    print("✅ Model + features loaded")
 
 # =========================
-# Health Check
+# Feature Engineering (IMPORTANT)
 # =========================
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy",
-        "model_loaded": model is not None
-    }
+def prepare_features(data: TaxiInput):
+    df = pd.DataFrame([{
+        "passenger_count": data.passenger_count,
+        "trip_distance": data.trip_distance,
+        "pickup_ts": data.pickup_ts
+    }])
+
+    # Convert time
+    df["pickup_ts"] = pd.to_datetime(df["pickup_ts"], errors="coerce")
+
+    df["month"] = df["pickup_ts"].dt.month
+    df["hour"] = df["pickup_ts"].dt.hour
+    df["day_of_week"] = df["pickup_ts"].dt.dayofweek
+
+    # One-hot encode
+    df = pd.get_dummies(df, columns=["month", "hour", "day_of_week"], drop_first=True)
+
+    # Align with training features
+    for col in feature_cols:
+        if col not in df.columns:
+            df[col] = 0
+
+    df = df[feature_cols]
+
+    return df
 
 # =========================
 # Prediction Endpoint
@@ -88,23 +119,18 @@ def health():
 @app.post("/predict")
 def predict(data: TaxiInput):
     try:
-        # Prepare input
-        input_df = pd.DataFrame([{
-            "passenger_count": data.passenger_count,
-            "trip_distance": data.trip_distance
-        }])
+        input_df = prepare_features(data)
 
-        # Predict
         prediction = model.predict(input_df)[0]
 
-        # Round + safety floor
         result = round(float(prediction), 2)
-        result = max(result, 3.0)  # minimum fare
+        result = max(result, 3.0)
 
-        # Save to DB
+        # Save
         save_df = pd.DataFrame([{
             "passenger_count": data.passenger_count,
             "trip_distance": data.trip_distance,
+            "pickup_ts": data.pickup_ts,
             "predicted_fare": result,
             "created_at": datetime.now()
         }])
@@ -114,23 +140,28 @@ def predict(data: TaxiInput):
         return {"predicted_fare": result}
 
     except Exception as e:
+        print("❌ ERROR:", str(e))   # 👈 VERY IMPORTANT
         raise HTTPException(status_code=500, detail=str(e))
 
 # =========================
-# UI Home
+# Health
+# =========================
+@app.get("/health")
+def health():
+    return {"status": "healthy", "model_loaded": model is not None}
+
+# =========================
+# UI
 # =========================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     return templates.TemplateResponse(
         "index.html",
-        {
-            "request": request,
-            "build_id": app.state.build_id
-        }
+        {"request": request, "build_id": app.state.build_id}
     )
 
 # =========================
-# History Endpoint
+# History
 # =========================
 @app.get("/history")
 def get_history():
