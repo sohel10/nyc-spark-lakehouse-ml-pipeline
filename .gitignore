@@ -79,3 +79,5 @@ Thumbs.db
 #######################################
 *.tar
 *.gz
+
+simple_auth_manager_passwords.json.generated
