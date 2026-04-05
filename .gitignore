@@ -5,23 +5,24 @@ data_raw/
 data_clean/
 data_clean_tmp/
 data_processed/
+data_single_10m/
 
 *.parquet
 *.csv
 
 #######################################
-# LOGS & OUTPUTS
+# OUTPUTS & LOGS
 #######################################
-logs/
 outputs/
+logs/
 
 *.log
+_SUCCESS
+*.crc
 
 #######################################
-# SPARK / BIG DATA TEMP FILES
+# SPARK / BIG DATA TEMP
 #######################################
-*.crc
-_SUCCESS
 .spark-staging/
 metastore_db/
 derby.log
@@ -46,7 +47,7 @@ env/
 # DATABASE / CONFIG
 #######################################
 *.db
-airflow.db
+airflow.db*
 airflow.cfg
 .env
 
@@ -55,6 +56,17 @@ airflow.cfg
 #######################################
 airflow-webserver.pid
 airflow-scheduler.pid
+
+#######################################
+# MODEL ARTIFACTS
+#######################################
+ml/model.pkl
+ml/features.pkl
+
+#######################################
+# NOTES
+#######################################
+note.txt
 
 #######################################
 # OS FILES
