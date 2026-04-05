@@ -88,6 +88,7 @@ FastAPI (Real-Time Inference API)
 Web UI (User Interaction)
         ↓
 Prediction Logging (PostgreSQL)
+````
 
 ## 📊 Dataset Scale
 
@@ -157,7 +158,7 @@ This project uses **GitHub Actions for continuous integration and deployment (CI
 
 ### ⚙️ Pipeline Overview
 
-```text
+````text
 Local Development
         ↓
     git push
@@ -174,7 +175,8 @@ Run FastAPI + ML Model + Monitoring
 
 ## 🚀 How to Run
 
-```bash
+````
+
 git clone <repo>
 cd nyc-spark-pipeline
 
