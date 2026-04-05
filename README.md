@@ -138,7 +138,7 @@ Real-time monitoring of API requests and system performance using Prometheus and
 
 
 <p align="center">
-<img src="docs/figures/grapna.png" width="600"/>
+<img src="docs/figures/grafna.png" width="600"/>
 </p>
 
 
