@@ -63,7 +63,7 @@ based on user inputs.
 ### 📊 Application Interface
 
 <p align="center">
-<img src="docs/figures/app.png" width="600"/>
+<img src="docs/figures/taxi1.png" width="600"/>
 </p>
 
 ---
@@ -89,6 +89,9 @@ Web UI (User Interaction)
         ↓
 Prediction Logging (PostgreSQL)
 ````
+<p align="center">
+<img src="docs/figures/taxi2.png" width="600"/>
+</p>
 
 ## 📊 Dataset Scale
 
