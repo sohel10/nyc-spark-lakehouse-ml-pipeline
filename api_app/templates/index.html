@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Taxi Fare Predictor</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            padding: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 320px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px;
+            background: #1f6feb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #155ab6;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 600px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #1f6feb;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- LEFT: Predictor -->
+<div class="card">
+    <h2>🚖 Taxi Fare Predictor</h2>
+
+    <label>Passenger Count</label>
+    <input type="number" id="passenger_count" placeholder="1–6 only">
+
+    <label>Trip Distance (miles)</label>
+    <input type="number" id="trip_distance" step="0.1" placeholder="> 0">
+
+    <label>Pickup Time</label>
+    <input type="datetime-local" id="pickup_ts">
+
+    <button onclick="predictFare()">Predict Fare</button>
+
+    <div id="result"></div>
+</div>
+
+<!-- RIGHT: History Table -->
+<div class="table-container">
+    <h3>📊 Previous Predictions</h3>
+
+    <table id="historyTable">
+        <thead>
+            <tr>
+                <th>Passenger</th>
+                <th>Distance</th>
+                <th>Fare ($)</th>
+                <th>Pickup Time</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+async function predictFare() {
+    const passenger_count = document.getElementById("passenger_count").value;
+    const trip_distance = document.getElementById("trip_distance").value;
+    const pickup_ts = document.getElementById("pickup_ts").value;
+    const resultDiv = document.getElementById("result");
+
+    if (!passenger_count || !trip_distance || !pickup_ts) {
+        resultDiv.innerText = "⚠️ Please fill all fields";
+        resultDiv.className = "error";
+        return;
+    }
+
+    try {
+        const response = await fetch("/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                passenger_count: parseInt(passenger_count),
+                trip_distance: parseFloat(trip_distance),
+                pickup_ts: pickup_ts
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            resultDiv.innerText = "⚠️ " + (data.detail?.[0]?.msg || "Invalid input");
+            resultDiv.className = "error";
+            return;
+        }
+
+        resultDiv.innerText = "💰 Predicted Fare: $" + data.predicted_fare.toFixed(2);
+        resultDiv.className = "success";
+
+        loadHistory();
+
+    } catch (error) {
+        resultDiv.innerText = "❌ Server error";
+        resultDiv.className = "error";
+    }
+}
+
+async function loadHistory() {
+    const response = await fetch("/history");
+    const data = await response.json();
+
+    const tableBody = document.querySelector("#historyTable tbody");
+    tableBody.innerHTML = "";
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${row.passenger_count}</td>
+            <td>${row.trip_distance}</td>
+            <td>${row.predicted_fare.toFixed(2)}</td>
+            <td>${new Date(row.pickup_ts).toLocaleString()}</td>
+            <td>${new Date(row.created_at).toLocaleString()}</td>
+        `;
+
+        tableBody.appendChild(tr);
+    });
+}
+
+// Load history on page load
+window.onload = loadHistory;
+</script>
+
+</body>
+</html>
