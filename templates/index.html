@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fare Analysis Dashboard | NYC Taxi</title>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1a1f3a 50%, #0f172a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .content {flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px;}
+        .container {max-width: 1200px; width: 100%;}
+        .header {text-align: center; margin-bottom: 60px; padding: 30px;}
+        .logo {font-size: 48px; margin-bottom: 20px;}
+        .header h1 {font-size: 48px; font-weight: 700; margin-bottom: 10px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;}
+        .header p {font-size: 16px; color: #94a3b8; margin-bottom: 10px; font-weight: 500;}
+        .tagline {font-size: 14px; color: #64748b; margin-bottom: 40px;}
+        .stats-overview {display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 50px;}
+        .stat-card {background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 25px; text-align: center;}
+        .stat-card h3 {color: #94a3b8; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600;}
+        .stat-value {font-size: 32px; font-weight: 700; color: #3b82f6; margin-bottom: 5px;}
+        .stat-detail {font-size: 12px; color: #64748b;}
+        .buttons-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-bottom: 40px;}
+        .nav-button {background: rgba(30, 41, 59, 0.8); border: 2px solid transparent; border-radius: 16px; padding: 40px 30px; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: flex; flex-direction: column; align-items: center; text-align: center;}
+        .nav-button:hover {transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);}
+        .nav-button.period-2009 {border-color: #3b82f6; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(59, 130, 246, 0.05) 100%);}
+        .nav-button.period-2009:hover {border-color: #60a5fa; background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(59, 130, 246, 0.15) 100%); box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);}
+        .nav-button.period-2025 {border-color: #10b981; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(16, 185, 129, 0.05) 100%);}
+        .nav-button.period-2025:hover {border-color: #34d399; background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(16, 185, 129, 0.15) 100%); box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);}
+        .nav-button.comparison {border-color: #8b5cf6; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(139, 92, 246, 0.05) 100%);}
+        .nav-button.comparison:hover {border-color: #a78bfa; background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(139, 92, 246, 0.15) 100%); box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);}
+        .button-icon {font-size: 48px; margin-bottom: 15px;}
+        .button-title {font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #f1f5f9;}
+        .button-subtitle {font-size: 13px; color: #94a3b8; line-height: 1.5;}
+        .footer {background: rgba(15, 23, 42, 0.8); border-top: 1px solid rgba(59, 130, 246, 0.2); padding: 40px 20px; text-align: center;}
+        .footer-content {max-width: 1200px; margin: 0 auto;}
+        .footer p {color: #94a3b8; font-size: 13px; margin-bottom: 10px;}
+        .footer-links {display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 15px;}
+        .footer-link {color: #3b82f6; text-decoration: none; font-weight: 600; transition: color 0.3s;}
+        .footer-link:hover {color: #60a5fa;}
+        @media (max-width: 768px) {
+            .header h1 {font-size: 32px;}
+            .stats-overview {grid-template-columns: 1fr;}
+            .buttons-grid {grid-template-columns: 1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="content">
+    <div class="container">
+        <div class="header">
+            <div class="logo">📊</div>
+            <h1>Fare Analysis Dashboard</h1>
+            <p>16-Year Market Comparison & Price Prediction</p>
+            <div class="tagline">XGBoost ML Models | 46M+ Records | Production-Ready</div>
+        </div>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <h3>Dataset Coverage</h3>
+                <div class="stat-value">46M</div>
+                <div class="stat-detail">Trip Records Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <h3>Price Increase</h3>
+                <div class="stat-value">+75%</div>
+                <div class="stat-detail">16-Year Fare Change</div>
+            </div>
+            <div class="stat-card">
+                <h3>Model Accuracy</h3>
+                <div class="stat-value">RMSE $3-9</div>
+                <div class="stat-detail">Prediction Error Range</div>
+            </div>
+        </div>
+
+        <div class="buttons-grid">
+            <a href="/2009" class="nav-button period-2009">
+                <div class="button-icon">📈</div>
+                <div class="button-title">2009 Analysis</div>
+                <div class="button-subtitle">10.2M trips • Stable market • Monopoly pricing</div>
+            </a>
+            <a href="/2025" class="nav-button period-2025">
+                <div class="button-icon">📊</div>
+                <div class="button-title">2025 Analysis</div>
+                <div class="button-subtitle">36M trips • Modern market • Dynamic pricing</div>
+            </a>
+            <a href="/comparison" class="nav-button comparison">
+                <div class="button-icon">⚖️</div>
+                <div class="button-title">Side-by-Side</div>
+                <div class="button-subtitle">Compare periods • Market evolution</div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <div class="footer-content">
+        <p>NYC Taxi Fare Analysis Dashboard</p>
+        <div class="footer-links">
+            <a href="https://linkedin.com/in/sohelcu06" class="footer-link" target="_blank">🔗 LinkedIn</a>
+            <a href="https://github.com/sohel10" class="footer-link" target="_blank">🐙 GitHub</a>
+        </div>
+        <p style="margin-top: 15px; color: #64748b; font-size: 12px;">Sohel Ahmed • Michigan, USA</p>
+    </div>
+</div>
+
+</body>
+</html>

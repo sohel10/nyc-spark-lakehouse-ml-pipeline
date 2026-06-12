@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2009 Market Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1a2847 50%, #0f172a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {max-width: 1400px; margin: 0 auto;}
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 16px;
+        }
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+        .header p {color: #94a3b8; font-size: 15px; font-weight: 500;}
+        .nav {text-align: center; margin-bottom: 30px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;}
+        .nav a {color: #3b82f6; text-decoration: none; font-weight: 600; padding: 8px 16px; border-radius: 8px; transition: all 0.3s; border: 1px solid transparent;}
+        .nav a:hover {background: rgba(59, 130, 246, 0.1); border-color: #3b82f6;}
+        .grid {display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;}
+        .card {background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 30px; backdrop-filter: blur(10px);}
+        .card h2 {color: #3b82f6; margin-bottom: 25px; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px;}
+        .form-group {margin-bottom: 18px;}
+        .form-label {display: block; color: #cbd5e1; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700;}
+        .form-hint {display: block; color: #64748b; font-size: 11px; margin-top: 4px; font-style: italic;}
+        input {width: 100%; padding: 12px 14px; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px; background: rgba(15, 23, 42, 0.5); color: #3b82f6; font-size: 15px; transition: all 0.3s;}
+        input:focus {outline: none; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);}
+        button {width: 100%; padding: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.3s; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px;}
+        button:hover {transform: translateY(-2px); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);}
+        .result {background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%); padding: 25px; border-radius: 12px; margin-top: 25px; border: 1px solid rgba(59, 130, 246, 0.2); display: none;}
+        .result.show {display: block; animation: slideIn 0.3s ease;}
+        @keyframes slideIn {from {opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);}}
+        .fare-label {color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600;}
+        .fare-value {font-size: 56px; color: #3b82f6; font-weight: 700; margin-bottom: 15px; font-family: 'Courier New', monospace;}
+        .trip-details {background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 10px; margin-top: 15px; font-size: 13px; color: #cbd5e1; line-height: 1.8; border-left: 3px solid #3b82f6;}
+        .trip-details strong {color: #60a5fa; display: block; margin-bottom: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
+        .trip-details div {margin-bottom: 6px;}
+        .info-box {background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 3px solid #3b82f6; font-size: 13px; color: #cbd5e1; line-height: 1.7;}
+        .info-box strong {color: #60a5fa;}
+        .chart-container {position: relative; height: 380px; margin-top: 20px;}
+        .full-width {grid-column: 1 / -1;}
+        @media (max-width: 1024px) {.grid {grid-template-columns: 1fr;}}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="nav">
+        <a href="/">← Home</a>
+        <a href="/2025">2025 →</a>
+        <a href="/comparison">Compare</a>
+    </div>
+
+    <div class="header">
+        <h1>📈 2009 Market Analysis</h1>
+        <p>10.2M Trip Records | Stable Market | XGBoost Model RMSE: $3.18</p>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>🎯 Fare Prediction</h2>
+            
+            <div class="form-group">
+                <label class="form-label">📍 Distance (miles)</label>
+                <input type="number" id="distance" value="5.0" min="0.1" max="50" step="0.1">
+                <span class="form-hint">Enter trip distance</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">👥 Passengers</label>
+                <input type="number" id="passenger" value="1" min="1" max="6">
+                <span class="form-hint">Number of people</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🕐 Time of Day (Hour)</label>
+                <input type="number" id="hour" value="12" min="0" max="23">
+                <span class="form-hint">0=midnight, 12=noon, 23=11pm</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📅 Day of Week</label>
+                <input type="number" id="day" value="3" min="0" max="6">
+                <span class="form-hint">0=Sunday, 3=Wednesday, 6=Saturday</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📆 Month</label>
+                <input type="number" id="month" value="6" min="1" max="12">
+                <span class="form-hint">1=January, 6=June, 12=December</span>
+            </div>
+
+            <button onclick="predict()">💰 Calculate Fare</button>
+
+            <div class="result" id="resultBox">
+                <div class="fare-label">Predicted Fare</div>
+                <div class="fare-value" id="fareValue">$0.00</div>
+                
+                <div class="trip-details">
+                    <strong>Your Trip Details:</strong>
+                    <div>📍 Distance: <span id="distDisplay">5.0</span> miles</div>
+                    <div>👥 Passengers: <span id="passDisplay">1</span></div>
+                    <div>🕐 Time: <span id="timeDisplay">12:00 PM</span></div>
+                    <div>📅 Day: <span id="dayDisplay">Wednesday</span></div>
+                </div>
+
+                <div class="info-box">
+                    <strong>Model Reliability</strong><br>
+                    Prediction accuracy: ±$3.18 error margin (RMSE)<br>
+                    Based on 10.2 million historical trips
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Market Profile</h2>
+            
+            <div class="info-box">
+                <strong>Dataset Summary</strong><br>
+                Total Trips: 10.2 Million<br>
+                Time Period: Full Year<br>
+                Model Type: XGBoost Regressor<br>
+                Features: 6 temporal + distance features
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <strong>Market Characteristics</strong><br>
+                Status: Stable pricing<br>
+                Competition: Monopoly market<br>
+                Volatility: Low (RMSE $3.18)<br>
+                Avg Trip Cost: $12-18
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <strong>Feature Engineering</strong><br>
+                Distance & Distance²<br>
+                Hour of day<br>
+                Day of week<br>
+                Month seasonality
+            </div>
+        </div>
+
+        <div class="card full-width">
+            <h2>📈 Distance vs Fare Trend</h2>
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+async function predict() {
+    const distance = parseFloat(document.getElementById("distance").value);
+    const passenger = parseInt(document.getElementById("passenger").value);
+    const hour = parseInt(document.getElementById("hour").value);
+    const day = parseInt(document.getElementById("day").value);
+    const month = parseInt(document.getElementById("month").value);
+
+    const data = {
+        passenger_count: passenger,
+        trip_distance: distance,
+        hour: hour,
+        day_of_week: day,
+        month: month
+    };
+
+    try {
+        const res = await fetch("/api/predict/2009", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        
+        document.getElementById("fareValue").innerText = `$${result.fare.toFixed(2)}`;
+        document.getElementById("distDisplay").innerText = distance.toFixed(1);
+        document.getElementById("passDisplay").innerText = passenger;
+        
+        const ampm = hour < 12 ? "AM" : "PM";
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        document.getElementById("timeDisplay").innerText = `${displayHour}:00 ${ampm}`;
+        document.getElementById("dayDisplay").innerText = days[day];
+        
+        document.getElementById("resultBox").classList.add("show");
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+async function updateChart() {
+    const distances = [1, 2, 3, 5, 10, 15, 20];
+    const fares = [];
+
+    for (let dist of distances) {
+        try {
+            const res = await fetch("/api/predict/2009", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    passenger_count: 1,
+                    trip_distance: dist,
+                    hour: 12,
+                    day_of_week: 3,
+                    month: 6
+                })
+            });
+            const result = await res.json();
+            fares.push(result.fare);
+        } catch (error) {
+            console.error("Error fetching prediction:", error);
+        }
+    }
+
+    const ctx = document.getElementById("chart").getContext("2d");
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: distances.map(d => `${d}mi`),
+            datasets: [{
+                label: "Predicted Fare",
+                data: fares,
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                tension: 0.4,
+                fill: true,
+                pointRadius: 6,
+                pointBackgroundColor: "#3b82f6",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                borderWidth: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: "#cbd5e1",
+                        font: {size: 13, weight: '600'},
+                        padding: 20
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {color: "#94a3b8", font: {size: 12}},
+                    grid: {color: "rgba(59, 130, 246, 0.1)"},
+                    beginAtZero: true
+                },
+                x: {
+                    ticks: {color: "#94a3b8", font: {size: 12}},
+                    grid: {color: "rgba(59, 130, 246, 0.1)"}
+                }
+            }
+        }
+    });
+}
+
+window.onload = () => {
+    predict();
+    updateChart();
+};
+</script>
+
+</body>
+</html>

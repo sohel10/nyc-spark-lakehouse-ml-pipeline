@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Comparison Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1f1a2e 0%, #2d1b47 50%, #1f1a2e 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {max-width: 1400px; margin: 0 auto;}
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+        }
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+        .header p {
+            color: #94a3b8;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        .nav a:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: #8b5cf6;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        .card h2 {
+            color: #8b5cf6;
+            margin-bottom: 25px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .input-section {
+            background: rgba(139, 92, 246, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .form-hint {
+            display: block;
+            color: #64748b;
+            font-size: 11px;
+            margin-top: 3px;
+            font-style: italic;
+        }
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            color: #a78bfa;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .result-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        .result-card h3 {
+            font-size: 13px;
+            color: #a78bfa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        .fare-value {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        .result-card.period-2009 {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+        .result-card.period-2009 h3 {
+            color: #60a5fa;
+        }
+        .result-card.period-2009 .fare-value {
+            color: #3b82f6;
+        }
+        .result-card.period-2025 {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        .result-card.period-2025 h3 {
+            color: #6ee7b7;
+        }
+        .result-card.period-2025 .fare-value {
+            color: #10b981;
+        }
+        .metric {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+        }
+        .metric strong {
+            color: #e2e8f0;
+        }
+        .increase-box {
+            background: rgba(236, 72, 153, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 3px solid #ec4899;
+        }
+        .increase-label {
+            font-size: 12px;
+            color: #f472b6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .increase-value {
+            font-size: 36px;
+            color: #ec4899;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+        .trip-details {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            margin-top: 25px;
+        }
+        .trip-details h3 {
+            color: #a78bfa;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .trip-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .trip-item {
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+        .trip-item strong {
+            color: #e2e8f0;
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            color: #a78bfa;
+        }
+        .chart-container {
+            position: relative;
+            height: 420px;
+            margin-top: 20px;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .results-section {
+            display: none;
+        }
+        .results-section.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from {opacity: 0; transform: translateY(-10px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        .legend-dot.period-2009 {
+            background: #3b82f6;
+        }
+        .legend-dot.period-2025 {
+            background: #10b981;
+        }
+        @media (max-width: 1024px) {
+            .main-grid {grid-template-columns: 1fr;}
+            .comparison-grid {grid-template-columns: 1fr;}
+            .trip-grid {grid-template-columns: 1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="nav">
+        <a href="/">← Home</a>
+        <a href="/2009">2009</a>
+        <a href="/2025">2025</a>
+    </div>
+
+    <div class="header">
+        <h1>⚖️ Market Comparison</h1>
+        <p>16-Year Fare Analysis | Side-by-Side Predictions</p>
+    </div>
+
+    <div class="main-grid">
+        <div class="card">
+            <h2>🎯 Enter Trip Details</h2>
+            
+            <div class="input-section">
+                <div class="form-group">
+                    <label class="form-label">📍 Distance (miles)</label>
+                    <input type="number" id="distance" value="5.0" min="0.1" max="50" step="0.1">
+                    <span class="form-hint">Enter trip distance</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">👥 Passengers</label>
+                    <input type="number" id="passenger" value="1" min="1" max="6">
+                    <span class="form-hint">Number of people</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🕐 Time of Day (Hour)</label>
+                    <input type="number" id="hour" value="12" min="0" max="23">
+                    <span class="form-hint">0=midnight, 12=noon, 23=11pm</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📅 Day of Week</label>
+                    <input type="number" id="day" value="3" min="0" max="6">
+                    <span class="form-hint">0=Sunday, 3=Wednesday, 6=Saturday</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📆 Month</label>
+                    <input type="number" id="month" value="6" min="1" max="12">
+                    <span class="form-hint">1=January, 6=June, 12=December</span>
+                </div>
+
+                <button onclick="compare()">📊 Compare Fares</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📈 Market Overview</h2>
+            
+            <div style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 10px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
+                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 700;">2009 Dataset</div>
+                <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+                    Total Trips: 10.2M<br>
+                    Model RMSE: $3.18<br>
+                    Market Status: Stable
+                </div>
+            </div>
+
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 10px; border-left: 3px solid #10b981; margin-bottom: 20px;">
+                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 700;">2025 Dataset</div>
+                <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+                    Total Trips: 36M<br>
+                    Model RMSE: $8.67<br>
+                    Market Status: Dynamic
+                </div>
+            </div>
+
+            <div style="background: rgba(236, 72, 153, 0.1); padding: 15px; border-radius: 10px; border-left: 3px solid #ec4899;">
+                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 700;">Market Change</div>
+                <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+                    Average Increase: 75-90%<br>
+                    Contributing Factors:<br>
+                    Competition, inflation, dynamic pricing
+                </div>
+            </div>
+        </div>
+
+        <div class="card full-width results-section" id="resultsBox">
+            <h2>💰 Prediction Results</h2>
+
+            <div class="trip-details">
+                <h3>📋 Trip Configuration</h3>
+                <div class="trip-grid">
+                    <div class="trip-item">
+                        <strong>📍 Distance</strong>
+                        <span id="tripDist">5.0</span> miles
+                    </div>
+                    <div class="trip-item">
+                        <strong>👥 Passengers</strong>
+                        <span id="tripPass">1</span>
+                    </div>
+                    <div class="trip-item">
+                        <strong>🕐 Time</strong>
+                        <span id="tripTime">12:00 PM</span>
+                    </div>
+                    <div class="trip-item">
+                        <strong>📅 When</strong>
+                        <span id="tripDay">Wednesday, June</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comparison-grid">
+                <div class="result-card period-2009">
+                    <h3>2009 Fare</h3>
+                    <div class="fare-value" id="fare2009">$0.00</div>
+                    <div class="metric"><strong>Model:</strong> XGBoost</div>
+                    <div class="metric"><strong>Accuracy:</strong> ±$3.18</div>
+                    <div class="metric"><strong>Records:</strong> 10.2M</div>
+                </div>
+
+                <div class="result-card period-2025">
+                    <h3>2025 Fare</h3>
+                    <div class="fare-value" id="fare2025">$0.00</div>
+                    <div class="metric"><strong>Model:</strong> XGBoost</div>
+                    <div class="metric"><strong>Accuracy:</strong> ±$8.67</div>
+                    <div class="metric"><strong>Records:</strong> 36M</div>
+                </div>
+            </div>
+
+            <div class="increase-box">
+                <div class="increase-label">💹 Price Increase</div>
+                <div class="increase-value" id="increaseValue">+0%</div>
+                <div style="font-size: 12px; color: #f472b6; margin-top: 8px;">
+                    16-year market evolution
+                </div>
+            </div>
+        </div>
+
+        <div class="card full-width">
+            <h2>📊 Fare Comparison Chart</h2>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot period-2009"></div>
+                    <span>2009 Market</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot period-2025"></div>
+                    <span>2025 Market</span>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+let comparisonChart = null;
+
+async function compare() {
+    const distance = parseFloat(document.getElementById("distance").value);
+    const passenger = parseInt(document.getElementById("passenger").value);
+    const hour = parseInt(document.getElementById("hour").value);
+    const day = parseInt(document.getElementById("day").value);
+    const month = parseInt(document.getElementById("month").value);
+
+    const data = {
+        passenger_count: passenger,
+        trip_distance: distance,
+        hour: hour,
+        day_of_week: day,
+        month: month
+    };
+
+    try {
+        const res = await fetch("/api/compare", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        
+        document.getElementById("fare2009").innerText = `$${result.fare_2009.toFixed(2)}`;
+        document.getElementById("fare2025").innerText = `$${result.fare_2025.toFixed(2)}`;
+        document.getElementById("increaseValue").innerText = `+${result.increase_percent.toFixed(1)}%`;
+        
+        document.getElementById("tripDist").innerText = distance.toFixed(1);
+        document.getElementById("tripPass").innerText = passenger;
+        
+        const ampm = hour < 12 ? "AM" : "PM";
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        document.getElementById("tripTime").innerText = `${displayHour}:00 ${ampm}`;
+        document.getElementById("tripDay").innerText = `${days[day]}, ${months[month - 1]}`;
+        
+        document.getElementById("resultsBox").classList.add("show");
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+async function updateChart() {
+    const distances = [1, 2, 3, 5, 10, 15, 20];
+    const fares2009 = [], fares2025 = [];
+
+    for (let dist of distances) {
+        try {
+            const res = await fetch("/api/compare", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    passenger_count: 1,
+                    trip_distance: dist,
+                    hour: 12,
+                    day_of_week: 3,
+                    month: 6
+                })
+            });
+            const result = await res.json();
+            fares2009.push(result.fare_2009);
+            fares2025.push(result.fare_2025);
+        } catch (error) {
+            console.error("Error fetching prediction:", error);
+        }
+    }
+
+    const ctx = document.getElementById("chart").getContext("2d");
+    
+    if (comparisonChart) {
+        comparisonChart.destroy();
+    }
+
+    comparisonChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: distances.map(d => `${d}mi`),
+            datasets: [
+                {
+                    label: "2009 Fare",
+                    data: fares2009,
+                    borderColor: "#3b82f6",
+                    backgroundColor: "rgba(59, 130, 246, 0.1)",
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointBackgroundColor: "#3b82f6",
+                    pointBorderColor: "#fff",
+                    pointBorderWidth: 2,
+                    borderWidth: 3,
+                },
+                {
+                    label: "2025 Fare",
+                    data: fares2025,
+                    borderColor: "#10b981",
+                    backgroundColor: "rgba(16, 185, 129, 0.1)",
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointBackgroundColor: "#10b981",
+                    pointBorderColor: "#fff",
+                    pointBorderWidth: 2,
+                    borderWidth: 3,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: "#cbd5e1",
+                        font: {size: 13, weight: '600'},
+                        padding: 20
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {color: "#94a3b8", font: {size: 12}},
+                    grid: {color: "rgba(139, 92, 246, 0.1)"},
+                    beginAtZero: true
+                },
+                x: {
+                    ticks: {color: "#94a3b8", font: {size: 12}},
+                    grid: {color: "rgba(139, 92, 246, 0.1)"}
+                }
+            }
+        }
+    });
+}
+
+window.onload = () => {
+    updateChart();
+};
+</script>
+
+</body>
+</html>

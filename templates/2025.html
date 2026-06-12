@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2025 - Modern Era</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {margin: 0; padding: 0; box-sizing: border-box;}
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {max-width: 1200px; margin: 0 auto;}
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(6, 95, 70, 0.8);
+            border-radius: 16px;
+            border: 2px solid #10b981;
+        }
+        .header h1 {font-size: 42px; color: #6ee7b7; margin-bottom: 10px;}
+        .header p {color: #a7f3d0; font-size: 14px;}
+        .grid {display: grid; grid-template-columns: 1fr 1fr; gap: 30px;}
+        .card {
+            background: rgba(31, 41, 55, 0.6);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 25px;
+        }
+        .card h2 {color: #6ee7b7; margin-bottom: 20px;}
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            display: block;
+            color: #a7f3d0;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #6ee7b7;
+            font-size: 15px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #6ee7b7;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background: #10b981;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {background: #059669; transform: translateY(-2px);}
+        .result {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            border: 2px solid #10b981;
+        }
+        .result.show {display: block;}
+        .fare-label {color: #a7f3d0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;}
+        .fare-value {font-size: 56px; color: #6ee7b7; font-weight: 700; margin-bottom: 15px;}
+        .trip-details {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #a7f3d0;
+            line-height: 1.8;
+        }
+        .trip-details strong {color: #6ee7b7;}
+        .chart-container {position: relative; height: 350px; margin-top: 20px;}
+        .nav {text-align: center; margin-bottom: 20px;}
+        .nav a {color: #6ee7b7; text-decoration: none; margin: 0 15px; font-weight: 600;}
+        .nav a:hover {text-decoration: underline;}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="nav">
+        <a href="/">← Home</a>
+        <a href="/2009">← 2009</a>
+        <a href="/comparison">Compare</a>
+    </div>
+
+    <div class="header">
+        <h1>🚕 2025: Modern Era</h1>
+        <p>Uber/Lyft competition, dynamic pricing, volatile market</p>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>⚙️ Predict Your Fare</h2>
+            
+            <div class="form-group">
+                <label class="form-label">📍 Distance (miles)</label>
+                <input type="number" id="distance" value="5.1" min="0.1" max="50" step="0.1">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">👥 Number of Passengers</label>
+                <input type="number" id="passenger" value="1" min="1" max="6">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🕐 Time of Day (Hour)</label>
+                <input type="number" id="hour" value="12" min="0" max="23">
+                <small style="color: #64748b; font-size: 11px; margin-top: 4px; display: block;">0=midnight, 12=noon, 23=11pm</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📅 Day of Week</label>
+                <input type="number" id="day" value="2" min="0" max="6">
+                <small style="color: #64748b; font-size: 11px; margin-top: 4px; display: block;">0=Sunday, 1=Monday... 6=Saturday</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">📆 Month</label>
+                <input type="number" id="month" value="6" min="1" max="12">
+                <small style="color: #64748b; font-size: 11px; margin-top: 4px; display: block;">1=January, 6=June, 12=December</small>
+            </div>
+
+            <button onclick="predict()">🚀 Calculate Fare</button>
+            
+            <div class="result" id="resultBox">
+                <div class="fare-label">💰 Your 2025 Taxi Fare Would Be:</div>
+                <div class="fare-value" id="fareValue">$0.00</div>
+                
+                <div class="trip-details">
+                    <div><strong>Your Trip Details:</strong></div>
+                    <div>📍 Distance: <span id="distDisplay">5.1</span> miles</div>
+                    <div>👥 Passengers: <span id="passDisplay">1</span></div>
+                    <div>🕐 Time: <span id="timeDisplay">12:00 PM, Tuesday</span></div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(16, 185, 129, 0.3);">
+                        <strong>Model Accuracy:</strong><br>
+                        ±$8.67 error margin (RMSE)<br>
+                        Based on 36 million trips
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Distance Impact</h2>
+            <div style="line-height: 2; color: #a7f3d0; margin-bottom: 20px;">
+                <strong>📊 Dataset:</strong> 36M trips<br>
+                <strong>🤖 Model:</strong> XGBoost<br>
+                <strong>✓ Accuracy:</strong> RMSE $8.67<br>
+                <strong>🏪 Market:</strong> Competition<br>
+                <strong>💹 Status:</strong> Dynamic Pricing<br>
+                <strong>💵 Avg Trip:</strong> ~$25-35
+            </div>
+            <div class="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function predict() {
+    const distance = parseFloat(document.getElementById("distance").value);
+    const passenger = parseInt(document.getElementById("passenger").value);
+    const hour = parseInt(document.getElementById("hour").value);
+    const day = parseInt(document.getElementById("day").value);
+    const month = parseInt(document.getElementById("month").value);
+
+    const data = {
+        passenger_count: passenger,
+        trip_distance: distance,
+        hour: hour,
+        day_of_week: day,
+        month: month
+    };
+
+    const res = await fetch("/api/predict/2025", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+    
+    document.getElementById("fareValue").innerText = `$${result.fare.toFixed(2)}`;
+    document.getElementById("distDisplay").innerText = distance.toFixed(1);
+    document.getElementById("passDisplay").innerText = passenger;
+    
+    const ampm = hour < 12 ? "AM" : "PM";
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    document.getElementById("timeDisplay").innerText = `${displayHour}:00 ${ampm}, ${days[day]}`;
+    
+    document.getElementById("resultBox").classList.add("show");
+}
+
+async function updateChart() {
+    const distances = [1, 2, 3, 5, 10, 15, 20];
+    const fares = [];
+
+    for (let dist of distances) {
+        const res = await fetch("/api/predict/2025", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                passenger_count: 1,
+                trip_distance: dist,
+                hour: 12,
+                day_of_week: 2,
+                month: 6
+            })
+        });
+        const result = await res.json();
+        fares.push(result.fare);
+    }
+
+    const ctx = document.getElementById("chart").getContext("2d");
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: distances.map(d => `${d}mi`),
+            datasets: [{
+                label: "2025 Fare",
+                data: fares,
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointBackgroundColor: "#10b981",
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {labels: {color: "#6ee7b7", font: {size: 14}}}
+            },
+            scales: {
+                y: {
+                    ticks: {color: "#6ee7b7"},
+                    grid: {color: "rgba(16, 185, 129, 0.1)"}
+                },
+                x: {
+                    ticks: {color: "#6ee7b7"},
+                    grid: {color: "rgba(16, 185, 129, 0.1)"}
+                }
+            }
+        }
+    });
+}
+
+window.onload = () => {
+    predict();
+    updateChart();
+};
+</script>
+
+</body>
+</html>

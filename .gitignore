@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pem
+*.pem:*
+*.json.generated
+.env
+venv/
+.vscode/
+.DS_Store
